@@ -2,16 +2,13 @@
 
 package akakyi.bot.tasksReminder
 
-import com.elbekD.bot.Bot
+import akakyi.bot.tasksReminder.api.wrapper.MessageApiWrapperFactory
+import akakyi.bot.tasksReminder.api.wrapper.WrapperType
 
-private val TOKEN = "1814732786:AAGBKNV8Kih3Y_zQznitu69uO6pVNq9V8dA"
-
-private val BOT_NAME = "TyZabylZadachuBot"
-
-fun main(args: Array<String>) {
-    val bot = Bot.createPolling(BOT_NAME, TOKEN)
-    bot.onCommand("/start") { msg, _ ->
-        bot.sendMessage(msg.chat.id, "Hello World!")
+suspend fun main(args: Array<String>) {
+    val wrapper = MessageApiWrapperFactory.getWrapper(WrapperType.KOTLIN_WRAPPER)
+    wrapper.onMessageForCurrentChat("/start") {
+        "Hello World!"
     }
-    bot.start()
+    wrapper.startService()
 }
