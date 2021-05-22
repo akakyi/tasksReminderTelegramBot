@@ -1,3 +1,5 @@
+@file:JvmName("Main")
+
 package akakyi.bot.tasksReminder
 
 import com.elbekD.bot.Bot
