@@ -1,10 +1,10 @@
 package akakyi.bot.tasksReminder.api.wrapper.telegram
 
-import akakyi.bot.tasksReminder.api.wrapper.ChatContext
+import akakyi.bot.tasksReminder.api.wrapper.MessageContext
 import akakyi.bot.tasksReminder.api.wrapper.MessageApiWrapper
+import akakyi.bot.tasksReminder.api.wrapper.MessageSequence
 import com.elbekD.bot.Bot
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import com.elbekD.bot.feature.chain.chain
 
 internal object TelegramMessageApiWrapper : MessageApiWrapper {
 
@@ -16,24 +16,45 @@ internal object TelegramMessageApiWrapper : MessageApiWrapper {
 
     override suspend fun onMessageForAnyChat(
             message: String,
-            messageProducer: suspend (context: ChatContext) -> Unit
+            messageProducer: suspend (context: MessageContext) -> Unit
     ) {
         BOT.onCommand(message) { msg, _ ->
             val chatId = msg.chat.id
-            val context = ChatContext(chatId.toString())
-            messageProducer.invoke(context)
+            val context = MessageContext(chatId.toString(), msg.text)
+            messageProducer(context)
         }
     }
 
     override suspend fun onMessageForAnyChatWithResponse(
             message: String,
-            messageProducer: suspend (context: ChatContext) -> String
+            messageProducer: suspend (context: MessageContext) -> String
     ) {
         BOT.onCommand(message) { msg, _ ->
             val chatId = msg.chat.id
-            val context = ChatContext(chatId.toString())
-            val callbackMessage = messageProducer.invoke(context)
+            val context = MessageContext(chatId.toString(), msg.text)
+            val callbackMessage = messageProducer(context)
             BOT.sendMessage(chatId, callbackMessage)
+        }
+    }
+
+    override suspend fun sequence(
+            triggerMessage: String,
+            startFunction: (context: MessageContext) -> Unit
+    ) = MessageSequence(triggerMessage, startFunction)
+
+    override suspend fun completeSequence(sequence: MessageSequence) {
+        val chain = BOT.chain(sequence.triggerMessage) { msg ->
+            val chatId = msg.chat.id
+            val messageContext = MessageContext(chatId.toString(), msg.text)
+            sequence.startFunction(messageContext)
+        }
+
+        sequence.sequence.forEach { action ->
+            chain.then { msg ->
+                val chatId = msg.chat.id
+                val messageContext = MessageContext(chatId.toString(), msg.text)
+                action(messageContext)
+            }
         }
     }
 
