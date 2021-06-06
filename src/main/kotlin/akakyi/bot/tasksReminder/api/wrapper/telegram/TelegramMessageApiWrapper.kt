@@ -14,6 +14,10 @@ internal object TelegramMessageApiWrapper : MessageApiWrapper {
 
     private val BOT = Bot.createPolling(BOT_NAME, TOKEN)
 
+    override suspend fun sendMessage(chatId: String, message: String) {
+        BOT.sendMessage(chatId, message)
+    }
+
     override suspend fun onMessageForAnyChat(
             message: String,
             messageProducer: suspend (context: MessageContext) -> Unit
@@ -37,25 +41,27 @@ internal object TelegramMessageApiWrapper : MessageApiWrapper {
         }
     }
 
-    override suspend fun sequence(
+    override fun sequence(
             triggerMessage: String,
             startFunction: (context: MessageContext) -> Unit
     ) = MessageSequence(triggerMessage, startFunction)
 
-    override suspend fun completeSequence(sequence: MessageSequence) {
-        val chain = BOT.chain(sequence.triggerMessage) { msg ->
+    override suspend fun completeSequence(messageSequence: MessageSequence) {
+        val chain = BOT.chain(messageSequence.triggerMessage) { msg ->
             val chatId = msg.chat.id
             val messageContext = MessageContext(chatId.toString(), msg.text)
-            sequence.startFunction(messageContext)
+            messageSequence.startFunction(messageContext)
         }
 
-        sequence.sequence.forEach { action ->
+        messageSequence.sequence.forEach { action ->
             chain.then { msg ->
                 val chatId = msg.chat.id
                 val messageContext = MessageContext(chatId.toString(), msg.text)
                 action(messageContext)
             }
         }
+
+        chain.build()
     }
 
 //    override suspend fun sendMessageToAllChats(message: String) {
