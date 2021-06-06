@@ -2,7 +2,7 @@ package akakyi.bot.tasksReminder.api.wrapper
 
 import akakyi.bot.tasksReminder.api.wrapper.telegram.TelegramMessageApiWrapper
 
-object MessageApiWrapperFactory {
+object MessageApiWrapperRegistry {
 
         fun getWrapper(type: WrapperType): MessageApiWrapper {
             return when (type) {

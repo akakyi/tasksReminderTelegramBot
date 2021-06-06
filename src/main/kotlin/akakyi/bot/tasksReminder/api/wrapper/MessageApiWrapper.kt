@@ -2,9 +2,12 @@ package akakyi.bot.tasksReminder.api.wrapper
 
 interface MessageApiWrapper {
 
-    suspend fun onMessageForCurrentChat(message: String, messageProducer: suspend () -> String)
+    suspend fun onMessageForAnyChat(message: String, messageProducer: suspend (context: ChatContext) -> Unit)
 
-    suspend fun sendMessageToAllChats(message: String)
+    suspend fun onMessageForAnyChatWithResponse(
+            message: String,
+            messageProducer: suspend (context: ChatContext) -> String
+    )
 
     suspend fun startService()
 
